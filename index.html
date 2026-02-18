@@ -147,12 +147,9 @@
           <label for="youtubeUrl">URL do vídeo do YouTube</label>
           <input id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=..." />
 
-          <label for="apiEndpoint">API (opcional)</label>
-          <input id="apiEndpoint" value="https://co.wuk.sh/api/json" />
-
           <button id="downloadMp3Btn">Baixar e converter para MP3</button>
           <small>
-            Esta opção usa uma API externa para extrair o áudio do link e iniciar o download.
+            Conversão local pelo servidor com <code>yt-dlp</code> + <code>ffmpeg</code> (sem API externa).
           </small>
         </section>
 
@@ -183,7 +180,6 @@
       const playRandomBtn = document.getElementById('playRandomBtn');
       const nextRandomBtn = document.getElementById('nextRandomBtn');
       const youtubeUrlInput = document.getElementById('youtubeUrl');
-      const apiEndpointInput = document.getElementById('apiEndpoint');
       const downloadMp3Btn = document.getElementById('downloadMp3Btn');
       const playlistView = document.getElementById('playlistView');
       const player = document.getElementById('player');
@@ -192,56 +188,6 @@
       const playlist = [];
       let randomQueue = [];
       let current = null;
-
-      function normalizeApiResponse(payload) {
-        if (!payload || typeof payload !== 'object') return null;
-
-        if (payload.url || payload.audio || payload.file) {
-          return payload.url || payload.audio || payload.file;
-        }
-
-        if (Array.isArray(payload.picker) && payload.picker.length > 0) {
-          return payload.picker[0]?.url || null;
-        }
-
-        return null;
-      }
-
-      async function requestMp3(apiEndpoint, youtubeUrl) {
-        const response = await fetch(apiEndpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
-          body: JSON.stringify({
-            url: youtubeUrl,
-            isAudioOnly: true,
-            aFormat: 'mp3',
-          }),
-        });
-
-        const rawText = await response.text();
-        let payload = {};
-        if (rawText) {
-          try {
-            payload = JSON.parse(rawText);
-          } catch {
-            payload = { text: rawText };
-          }
-        }
-
-        if (!response.ok || payload.status === 'error') {
-          throw new Error(payload.text || payload.error || 'A API recusou a conversão.');
-        }
-
-        const downloadUrl = normalizeApiResponse(payload);
-        if (!downloadUrl) {
-          throw new Error('Resposta da API sem link de download.');
-        }
-
-        return downloadUrl;
-      }
 
       function updateButtons() {
         const hasItems = playlist.length > 0;
@@ -333,7 +279,6 @@
 
       downloadMp3Btn.addEventListener('click', async () => {
         const youtubeUrl = youtubeUrlInput.value.trim();
-        const apiEndpoint = apiEndpointInput.value.trim() || 'https://api.cobalt.tools/api/json';
 
         if (!youtubeUrl) {
           statusEl.textContent = 'Informe uma URL do YouTube para baixar o MP3.';
@@ -341,46 +286,34 @@
         }
 
         downloadMp3Btn.disabled = true;
-        statusEl.textContent = 'Convertendo e preparando download...';
+        statusEl.textContent = 'Convertendo vídeo para MP3 localmente...';
 
         try {
-          const endpoints = [apiEndpoint];
-          if (apiEndpoint !== 'https://api.cobalt.tools/api/json') {
-            endpoints.push('https://api.cobalt.tools/api/json');
-          }
+          const response = await fetch('/api/youtube-to-mp3', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({ url: youtubeUrl }),
+          });
 
-          let downloadUrl = '';
-          let lastError = null;
-
-          for (const endpoint of endpoints) {
-            try {
-              downloadUrl = await requestMp3(endpoint, youtubeUrl);
-              if (endpoint !== apiEndpoint) {
-                statusEl.textContent = 'API principal indisponível. Usando API alternativa...';
-              }
-              break;
-            } catch (error) {
-              lastError = error;
-            }
-          }
-
-          if (!downloadUrl) {
-            throw lastError || new Error('Não foi possível obter o link do MP3.');
+          const payload = await response.json();
+          if (!response.ok) {
+            throw new Error(payload.error || 'Erro ao converter o vídeo.');
           }
 
           const a = document.createElement('a');
-          a.href = downloadUrl;
-          a.target = '_blank';
-          a.rel = 'noopener noreferrer';
-          a.download = '';
+          a.href = payload.download_url;
+          a.download = payload.filename || '';
           document.body.appendChild(a);
           a.click();
           a.remove();
 
-          statusEl.textContent = 'Download do MP3 iniciado.';
+          statusEl.textContent = `MP3 pronto: ${payload.filename}. Download iniciado.`;
         } catch (error) {
           const msg = error?.message || 'erro desconhecido';
-          statusEl.textContent = `Não foi possível baixar MP3: ${msg}. Verifique bloqueio de CORS/rede ou troque a API.`;
+          statusEl.textContent = `Não foi possível baixar MP3: ${msg}`;
         } finally {
           downloadMp3Btn.disabled = false;
         }
