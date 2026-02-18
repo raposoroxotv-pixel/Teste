@@ -83,11 +83,19 @@
       button.danger { background: var(--danger); color: white; }
       button:disabled { opacity: 0.55; cursor: not-allowed; }
 
+      .video-shell {
+        width: min(360px, 100%);
+        aspect-ratio: 9 / 16;
+        margin-inline: auto;
+      }
+
       video {
         width: 100%;
+        height: 100%;
         border-radius: 10px;
         border: 1px solid #334155;
         background: black;
+        object-fit: cover;
       }
 
       ol { margin: 0; padding-left: 1.4rem; }
@@ -96,7 +104,7 @@
       .controls {
         display: grid;
         gap: 0.5rem;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
       }
 
       .status {
@@ -135,12 +143,13 @@
         </section>
 
         <section class="panel">
-          <video id="player" controls playsinline></video>
+          <div class="video-shell">
+            <video id="player" controls playsinline></video>
+          </div>
 
           <div class="controls" style="margin-top: 0.8rem;">
             <button class="primary" id="playRandomBtn">Tocar aleatório</button>
             <button id="nextRandomBtn">Próximo aleatório</button>
-            <button class="danger" id="clearBtn">Limpar playlist</button>
           </div>
 
           <p class="status" id="status">Nenhum vídeo carregado.</p>
@@ -159,7 +168,6 @@
       const addFilesBtn = document.getElementById('addFilesBtn');
       const playRandomBtn = document.getElementById('playRandomBtn');
       const nextRandomBtn = document.getElementById('nextRandomBtn');
-      const clearBtn = document.getElementById('clearBtn');
       const playlistView = document.getElementById('playlistView');
       const player = document.getElementById('player');
       const statusEl = document.getElementById('status');
@@ -172,7 +180,6 @@
         const hasItems = playlist.length > 0;
         playRandomBtn.disabled = !hasItems;
         nextRandomBtn.disabled = !hasItems;
-        clearBtn.disabled = !hasItems;
       }
 
       function renderPlaylist() {
@@ -256,16 +263,6 @@
 
       playRandomBtn.addEventListener('click', playNextRandom);
       nextRandomBtn.addEventListener('click', playNextRandom);
-
-      clearBtn.addEventListener('click', () => {
-        playlist.splice(0, playlist.length);
-        randomQueue = [];
-        current = null;
-        player.removeAttribute('src');
-        player.load();
-        statusEl.textContent = 'Playlist limpa.';
-        renderPlaylist();
-      });
 
       player.addEventListener('ended', () => {
         playNextRandom();
