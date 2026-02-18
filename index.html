@@ -3,327 +3,349 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Playlist + Downloader YouTube para MP3</title>
+    <title>VideoFlex - Interface Adaptável para Vídeos</title>
     <style>
       :root {
-        color-scheme: light dark;
-        --bg: #0f172a;
-        --card: #1e293b;
-        --text: #e2e8f0;
-        --accent: #22c55e;
-        --danger: #ef4444;
+        --bg: #070b14;
+        --panel: #111827;
+        --panel-2: #0f172a;
+        --line: #243044;
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --accent: #38bdf8;
+        --accent-2: #22d3ee;
       }
 
-      * { box-sizing: border-box; }
+      * {
+        box-sizing: border-box;
+      }
 
       body {
         margin: 0;
-        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-        background: radial-gradient(circle at top, #1e293b, var(--bg));
-        color: var(--text);
         min-height: 100vh;
-        display: grid;
-        place-items: center;
-        padding: 1rem;
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        color: var(--text);
+        background: radial-gradient(circle at top, #172554 0%, var(--bg) 45%);
       }
 
       .app {
-        width: min(900px, 100%);
-        background: color-mix(in srgb, var(--card) 92%, black);
-        border: 1px solid #334155;
+        width: min(1100px, 100%);
+        margin-inline: auto;
+        padding: 1.2rem;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(1.4rem, 2.2vw, 2rem);
+      }
+
+      .subtitle {
+        margin: 0.5rem 0 1rem;
+        color: var(--muted);
+      }
+
+      .layout {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: minmax(260px, 330px) minmax(0, 1fr);
+      }
+
+      .panel {
+        background: color-mix(in srgb, var(--panel) 90%, black);
+        border: 1px solid var(--line);
         border-radius: 14px;
         padding: 1rem;
       }
 
-      h1 {
+      .panel h2 {
         margin-top: 0;
-        font-size: 1.6rem;
-      }
-
-      .grid {
-        display: grid;
-        gap: 1rem;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      }
-
-      .panel {
-        background: color-mix(in srgb, var(--card) 80%, black);
-        border: 1px solid #334155;
-        border-radius: 10px;
-        padding: 0.9rem;
+        font-size: 1.1rem;
       }
 
       label {
         display: block;
-        margin-bottom: 0.25rem;
-        font-size: 0.9rem;
+        margin-bottom: 0.35rem;
+        font-size: 0.92rem;
       }
 
-      input, button {
+      input,
+      button {
         width: 100%;
-        border-radius: 8px;
-        border: 1px solid #475569;
-        padding: 0.6rem 0.7rem;
         font: inherit;
+        border-radius: 10px;
       }
 
       input {
-        margin-bottom: 0.6rem;
-        background: #0b1220;
+        border: 1px solid #334155;
+        background: #060b17;
         color: var(--text);
+        padding: 0.62rem 0.7rem;
+        margin-bottom: 0.65rem;
       }
 
       button {
-        background: #1f2937;
+        border: 1px solid #334155;
+        background: #182338;
         color: var(--text);
+        padding: 0.64rem 0.78rem;
         cursor: pointer;
       }
 
-      button.primary { background: var(--accent); color: #052e16; font-weight: 700; }
-      button.danger { background: var(--danger); color: white; }
-      button:disabled { opacity: 0.55; cursor: not-allowed; }
+      button.primary {
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        color: #082f49;
+        border: none;
+        font-weight: 700;
+      }
 
-      .video-shell {
-        width: min(360px, 100%);
-        aspect-ratio: 9 / 16;
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .btn-row {
+        display: grid;
+        gap: 0.5rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-top: 0.8rem;
+      }
+
+      .viewer {
+        background: color-mix(in srgb, var(--panel-2) 92%, black);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 1rem;
+      }
+
+      .player-shell {
+        --ratio: 16 / 9;
+        width: min(100%, 820px);
         margin-inline: auto;
+        aspect-ratio: var(--ratio);
+        border-radius: 14px;
+        overflow: hidden;
+        border: 1px solid #334155;
+        background: #000;
+        display: grid;
+        place-items: center;
       }
 
       video {
         width: 100%;
         height: 100%;
-        border-radius: 10px;
-        border: 1px solid #334155;
-        background: black;
-        object-fit: cover;
+        object-fit: contain;
+        background: #000;
       }
 
-      ol { margin: 0; padding-left: 1.4rem; }
-      li { margin: 0.35rem 0; }
+      .meta {
+        margin-top: 0.75rem;
+        color: #bae6fd;
+        text-align: center;
+        font-size: 0.95rem;
+      }
 
-      .controls {
+      .list {
+        margin: 1rem 0 0;
+        padding: 0;
+        list-style: none;
         display: grid;
-        gap: 0.5rem;
-        grid-template-columns: repeat(2, 1fr);
+        gap: 0.55rem;
+        max-height: 310px;
+        overflow: auto;
       }
 
-      .status {
-        margin: 0.7rem 0 0;
-        font-size: 0.9rem;
-        color: #93c5fd;
+      .item {
+        border: 1px solid #334155;
+        background: #091224;
+        color: var(--text);
+        border-radius: 10px;
+        padding: 0.62rem;
+        text-align: left;
       }
 
-      small { color: #94a3b8; }
+      .item.active {
+        border-color: var(--accent);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 60%, transparent);
+      }
+
+      .tip {
+        margin-top: 0.6rem;
+        font-size: 0.82rem;
+        color: var(--muted);
+      }
+
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
   </head>
   <body>
     <main class="app">
-      <h1>Playlist de Vídeos Curtos + YouTube para MP3</h1>
+      <h1>VideoFlex</h1>
+      <p class="subtitle">Uma interface de vídeos que se adapta automaticamente ao formato de cada vídeo (vertical, horizontal ou quadrado).</p>
 
-      <div class="grid">
-        <section class="panel">
-          <h2>Adicionar por URL</h2>
-          <label for="title">Título</label>
-          <input id="title" placeholder="Ex.: Gol de bicicleta" />
+      <section class="layout">
+        <aside class="panel">
+          <h2>Adicionar vídeos</h2>
 
-          <label for="url">URL de vídeo (.mp4, .webm...)</label>
-          <input id="url" placeholder="https://exemplo.com/video-curto.mp4" />
+          <label for="title">Título (opcional)</label>
+          <input id="title" placeholder="Ex.: Trailer oficial" />
 
-          <button class="primary" id="addUrlBtn">Adicionar URL à playlist</button>
+          <label for="url">URL do vídeo</label>
+          <input id="url" placeholder="https://exemplo.com/video.mp4" />
+          <button id="addUrl" class="primary">Adicionar URL</button>
 
-          <hr />
+          <hr style="border-color:#243044; margin:1rem 0;" />
 
-          <h2>Ou adicionar arquivos locais</h2>
-          <label for="fileInput">Selecione vídeos curtos</label>
-          <input id="fileInput" type="file" accept="video/*" multiple />
-          <button id="addFilesBtn">Adicionar arquivos à playlist</button>
-          <small>
-            Dica: para URLs externas, use arquivos com CORS permitido.
-          </small>
+          <label for="files">Ou selecione arquivos locais</label>
+          <input id="files" type="file" accept="video/*" multiple />
+          <button id="addFiles">Adicionar arquivos</button>
 
-          <hr />
+          <div class="btn-row">
+            <button id="prevBtn">Anterior</button>
+            <button id="nextBtn">Próximo</button>
+          </div>
 
-          <h2>Baixar YouTube em MP3</h2>
-          <label for="youtubeUrl">URL do vídeo do YouTube</label>
-          <input id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=..." />
+          <ul id="playlist" class="list"></ul>
+          <p class="tip">Dica: a área do player muda o <code>aspect-ratio</code> ao carregar os metadados do vídeo.</p>
+        </aside>
 
-          <button id="downloadMp3Btn">Baixar e converter para MP3</button>
-          <small>
-            Conversão local pelo servidor com <code>yt-dlp</code> + <code>ffmpeg</code> (sem API externa).
-          </small>
-        </section>
-
-        <section class="panel">
-          <div class="video-shell">
+        <section class="viewer">
+          <div id="playerShell" class="player-shell">
             <video id="player" controls playsinline></video>
           </div>
-
-          <div class="controls" style="margin-top: 0.8rem;">
-            <button class="primary" id="playRandomBtn">Tocar aleatório</button>
-            <button id="nextRandomBtn">Próximo aleatório</button>
-          </div>
-
-          <p class="status" id="status">Nenhum vídeo carregado.</p>
-
-          <h3>Playlist</h3>
-          <ol id="playlistView"></ol>
+          <p id="status" class="meta">Nenhum vídeo selecionado.</p>
         </section>
-      </div>
+      </section>
     </main>
 
     <script>
       const titleInput = document.getElementById('title');
       const urlInput = document.getElementById('url');
-      const fileInput = document.getElementById('fileInput');
-      const addUrlBtn = document.getElementById('addUrlBtn');
-      const addFilesBtn = document.getElementById('addFilesBtn');
-      const playRandomBtn = document.getElementById('playRandomBtn');
-      const nextRandomBtn = document.getElementById('nextRandomBtn');
-      const youtubeUrlInput = document.getElementById('youtubeUrl');
-      const downloadMp3Btn = document.getElementById('downloadMp3Btn');
-      const playlistView = document.getElementById('playlistView');
+      const fileInput = document.getElementById('files');
+      const addUrlBtn = document.getElementById('addUrl');
+      const addFilesBtn = document.getElementById('addFiles');
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const playlistEl = document.getElementById('playlist');
       const player = document.getElementById('player');
+      const playerShell = document.getElementById('playerShell');
       const statusEl = document.getElementById('status');
 
       const playlist = [];
-      let randomQueue = [];
-      let current = null;
+      let currentIndex = -1;
 
-      function updateButtons() {
+      function createTitle(source, fallbackPrefix) {
+        const cleaned = source.trim();
+        return cleaned || `${fallbackPrefix} ${playlist.length + 1}`;
+      }
+
+      function updateControls() {
         const hasItems = playlist.length > 0;
-        playRandomBtn.disabled = !hasItems;
-        nextRandomBtn.disabled = !hasItems;
+        prevBtn.disabled = !hasItems;
+        nextBtn.disabled = !hasItems;
       }
 
       function renderPlaylist() {
-        playlistView.innerHTML = '';
+        playlistEl.innerHTML = '';
         playlist.forEach((item, index) => {
+          const button = document.createElement('button');
+          button.className = `item ${index === currentIndex ? 'active' : ''}`;
+          button.type = 'button';
+          button.textContent = `${index + 1}. ${item.title}`;
+          button.addEventListener('click', () => playAt(index));
+
           const li = document.createElement('li');
-          li.textContent = `${index + 1}. ${item.title}`;
-          playlistView.appendChild(li);
+          li.appendChild(button);
+          playlistEl.appendChild(li);
         });
-        updateButtons();
       }
 
-      function resetRandomQueue() {
-        randomQueue = playlist.map((_, idx) => idx);
-        for (let i = randomQueue.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [randomQueue[i], randomQueue[j]] = [randomQueue[j], randomQueue[i]];
-        }
+      function describeRatio(w, h) {
+        if (!w || !h) return 'desconhecido';
+        const ratio = w / h;
+        if (ratio > 1.2) return 'horizontal';
+        if (ratio < 0.85) return 'vertical';
+        return 'quadrado/quase quadrado';
       }
 
-      function getNextRandomIndex() {
-        if (playlist.length === 0) return null;
-        if (randomQueue.length === 0) {
-          resetRandomQueue();
-        }
-        return randomQueue.pop();
+      function applyVideoRatio() {
+        const w = player.videoWidth;
+        const h = player.videoHeight;
+        if (!w || !h) return;
+
+        playerShell.style.setProperty('--ratio', `${w} / ${h}`);
+        const kind = describeRatio(w, h);
+        const currentTitle = playlist[currentIndex]?.title || 'Vídeo';
+        statusEl.textContent = `${currentTitle} • ${w}x${h} (${kind})`;
       }
 
-      function playByIndex(index) {
-        current = playlist[index];
-        if (!current) return;
-
-        player.src = current.src;
+      function playAt(index) {
+        if (index < 0 || index >= playlist.length) return;
+        currentIndex = index;
+        player.src = playlist[index].src;
+        player.load();
         player.play().catch(() => {
-          // Alguns navegadores bloqueiam autoplay sem interação do usuário.
+          statusEl.textContent = `Vídeo carregado: ${playlist[index].title}. Clique em play para iniciar.`;
         });
-
-        statusEl.textContent = `Tocando: ${current.title}`;
-      }
-
-      function playNextRandom() {
-        const idx = getNextRandomIndex();
-        if (idx === null) {
-          statusEl.textContent = 'Playlist vazia.';
-          return;
-        }
-        playByIndex(idx);
-      }
-
-      function addVideo(title, src) {
-        playlist.push({ title, src });
         renderPlaylist();
-        statusEl.textContent = `${playlist.length} vídeo(s) na playlist.`;
+      }
+
+      function addVideo(src, title) {
+        playlist.push({ src, title });
+        updateControls();
+        renderPlaylist();
+        if (currentIndex === -1) playAt(0);
       }
 
       addUrlBtn.addEventListener('click', () => {
-        const src = urlInput.value.trim();
-        if (!src) {
-          statusEl.textContent = 'Informe uma URL válida.';
+        const url = urlInput.value.trim();
+        if (!url) {
+          statusEl.textContent = 'Informe uma URL de vídeo válida.';
           return;
         }
-        const title = titleInput.value.trim() || `Vídeo ${playlist.length + 1}`;
-        addVideo(title, src);
+
+        addVideo(url, createTitle(titleInput.value, 'URL'));
         titleInput.value = '';
         urlInput.value = '';
       });
 
       addFilesBtn.addEventListener('click', () => {
-        const files = [...fileInput.files];
-        if (files.length === 0) {
-          statusEl.textContent = 'Selecione ao menos um arquivo de vídeo.';
+        const files = Array.from(fileInput.files || []);
+        if (!files.length) {
+          statusEl.textContent = 'Selecione pelo menos um arquivo de vídeo.';
           return;
         }
 
         files.forEach((file) => {
-          const blobUrl = URL.createObjectURL(file);
-          addVideo(file.name, blobUrl);
+          const objectUrl = URL.createObjectURL(file);
+          addVideo(objectUrl, createTitle(file.name, 'Arquivo'));
         });
+
         fileInput.value = '';
       });
 
-      playRandomBtn.addEventListener('click', playNextRandom);
-      nextRandomBtn.addEventListener('click', playNextRandom);
-
-      downloadMp3Btn.addEventListener('click', async () => {
-        const youtubeUrl = youtubeUrlInput.value.trim();
-
-        if (!youtubeUrl) {
-          statusEl.textContent = 'Informe uma URL do YouTube para baixar o MP3.';
-          return;
-        }
-
-        downloadMp3Btn.disabled = true;
-        statusEl.textContent = 'Convertendo vídeo para MP3 localmente...';
-
-        try {
-          const response = await fetch('/api/youtube-to-mp3', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Accept: 'application/json',
-            },
-            body: JSON.stringify({ url: youtubeUrl }),
-          });
-
-          const payload = await response.json();
-          if (!response.ok) {
-            throw new Error(payload.error || 'Erro ao converter o vídeo.');
-          }
-
-          const a = document.createElement('a');
-          a.href = payload.download_url;
-          a.download = payload.filename || '';
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-
-          statusEl.textContent = `MP3 pronto: ${payload.filename}. Download iniciado.`;
-        } catch (error) {
-          const msg = error?.message || 'erro desconhecido';
-          statusEl.textContent = `Não foi possível baixar MP3: ${msg}`;
-        } finally {
-          downloadMp3Btn.disabled = false;
-        }
+      nextBtn.addEventListener('click', () => {
+        if (!playlist.length) return;
+        const next = (currentIndex + 1) % playlist.length;
+        playAt(next);
       });
 
-      player.addEventListener('ended', () => {
-        playNextRandom();
+      prevBtn.addEventListener('click', () => {
+        if (!playlist.length) return;
+        const prev = (currentIndex - 1 + playlist.length) % playlist.length;
+        playAt(prev);
       });
 
-      updateButtons();
+      player.addEventListener('loadedmetadata', applyVideoRatio);
+      player.addEventListener('error', () => {
+        statusEl.textContent = 'Erro ao carregar o vídeo. Verifique a URL ou permissões do arquivo.';
+      });
+
+      updateControls();
+      renderPlaylist();
     </script>
   </body>
 </html>
