@@ -193,6 +193,56 @@
       let randomQueue = [];
       let current = null;
 
+      function normalizeApiResponse(payload) {
+        if (!payload || typeof payload !== 'object') return null;
+
+        if (payload.url || payload.audio || payload.file) {
+          return payload.url || payload.audio || payload.file;
+        }
+
+        if (Array.isArray(payload.picker) && payload.picker.length > 0) {
+          return payload.picker[0]?.url || null;
+        }
+
+        return null;
+      }
+
+      async function requestMp3(apiEndpoint, youtubeUrl) {
+        const response = await fetch(apiEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({
+            url: youtubeUrl,
+            isAudioOnly: true,
+            aFormat: 'mp3',
+          }),
+        });
+
+        const rawText = await response.text();
+        let payload = {};
+        if (rawText) {
+          try {
+            payload = JSON.parse(rawText);
+          } catch {
+            payload = { text: rawText };
+          }
+        }
+
+        if (!response.ok || payload.status === 'error') {
+          throw new Error(payload.text || payload.error || 'A API recusou a conversão.');
+        }
+
+        const downloadUrl = normalizeApiResponse(payload);
+        if (!downloadUrl) {
+          throw new Error('Resposta da API sem link de download.');
+        }
+
+        return downloadUrl;
+      }
+
       function updateButtons() {
         const hasItems = playlist.length > 0;
         playRandomBtn.disabled = !hasItems;
@@ -283,7 +333,7 @@
 
       downloadMp3Btn.addEventListener('click', async () => {
         const youtubeUrl = youtubeUrlInput.value.trim();
-        const apiEndpoint = apiEndpointInput.value.trim() || 'https://co.wuk.sh/api/json';
+        const apiEndpoint = apiEndpointInput.value.trim() || 'https://api.cobalt.tools/api/json';
 
         if (!youtubeUrl) {
           statusEl.textContent = 'Informe uma URL do YouTube para baixar o MP3.';
@@ -294,27 +344,28 @@
         statusEl.textContent = 'Convertendo e preparando download...';
 
         try {
-          const response = await fetch(apiEndpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Accept: 'application/json',
-            },
-            body: JSON.stringify({
-              url: youtubeUrl,
-              isAudioOnly: true,
-              aFormat: 'mp3',
-            }),
-          });
-
-          const payload = await response.json();
-          if (!response.ok || payload.status === 'error') {
-            throw new Error(payload.text || 'A API recusou a conversão.');
+          const endpoints = [apiEndpoint];
+          if (apiEndpoint !== 'https://api.cobalt.tools/api/json') {
+            endpoints.push('https://api.cobalt.tools/api/json');
           }
 
-          const downloadUrl = payload.url || payload.audio || payload.file;
+          let downloadUrl = '';
+          let lastError = null;
+
+          for (const endpoint of endpoints) {
+            try {
+              downloadUrl = await requestMp3(endpoint, youtubeUrl);
+              if (endpoint !== apiEndpoint) {
+                statusEl.textContent = 'API principal indisponível. Usando API alternativa...';
+              }
+              break;
+            } catch (error) {
+              lastError = error;
+            }
+          }
+
           if (!downloadUrl) {
-            throw new Error('Resposta da API sem link de download.');
+            throw lastError || new Error('Não foi possível obter o link do MP3.');
           }
 
           const a = document.createElement('a');
@@ -328,7 +379,8 @@
 
           statusEl.textContent = 'Download do MP3 iniciado.';
         } catch (error) {
-          statusEl.textContent = `Não foi possível baixar MP3: ${error.message}`;
+          const msg = error?.message || 'erro desconhecido';
+          statusEl.textContent = `Não foi possível baixar MP3: ${msg}. Verifique bloqueio de CORS/rede ou troque a API.`;
         } finally {
           downloadMp3Btn.disabled = false;
         }
