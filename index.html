@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Playlist de Vídeos Curtos Aleatória</title>
+    <title>Playlist + Downloader YouTube para MP3</title>
     <style>
       :root {
         color-scheme: light dark;
@@ -118,7 +118,7 @@
   </head>
   <body>
     <main class="app">
-      <h1>Playlist de Vídeos Curtos (ordem aleatória)</h1>
+      <h1>Playlist de Vídeos Curtos + YouTube para MP3</h1>
 
       <div class="grid">
         <section class="panel">
@@ -139,6 +139,20 @@
           <button id="addFilesBtn">Adicionar arquivos à playlist</button>
           <small>
             Dica: para URLs externas, use arquivos com CORS permitido.
+          </small>
+
+          <hr />
+
+          <h2>Baixar YouTube em MP3</h2>
+          <label for="youtubeUrl">URL do vídeo do YouTube</label>
+          <input id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=..." />
+
+          <label for="apiEndpoint">API (opcional)</label>
+          <input id="apiEndpoint" value="https://co.wuk.sh/api/json" />
+
+          <button id="downloadMp3Btn">Baixar e converter para MP3</button>
+          <small>
+            Esta opção usa uma API externa para extrair o áudio do link e iniciar o download.
           </small>
         </section>
 
@@ -168,6 +182,9 @@
       const addFilesBtn = document.getElementById('addFilesBtn');
       const playRandomBtn = document.getElementById('playRandomBtn');
       const nextRandomBtn = document.getElementById('nextRandomBtn');
+      const youtubeUrlInput = document.getElementById('youtubeUrl');
+      const apiEndpointInput = document.getElementById('apiEndpoint');
+      const downloadMp3Btn = document.getElementById('downloadMp3Btn');
       const playlistView = document.getElementById('playlistView');
       const player = document.getElementById('player');
       const statusEl = document.getElementById('status');
@@ -263,6 +280,59 @@
 
       playRandomBtn.addEventListener('click', playNextRandom);
       nextRandomBtn.addEventListener('click', playNextRandom);
+
+      downloadMp3Btn.addEventListener('click', async () => {
+        const youtubeUrl = youtubeUrlInput.value.trim();
+        const apiEndpoint = apiEndpointInput.value.trim() || 'https://co.wuk.sh/api/json';
+
+        if (!youtubeUrl) {
+          statusEl.textContent = 'Informe uma URL do YouTube para baixar o MP3.';
+          return;
+        }
+
+        downloadMp3Btn.disabled = true;
+        statusEl.textContent = 'Convertendo e preparando download...';
+
+        try {
+          const response = await fetch(apiEndpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({
+              url: youtubeUrl,
+              isAudioOnly: true,
+              aFormat: 'mp3',
+            }),
+          });
+
+          const payload = await response.json();
+          if (!response.ok || payload.status === 'error') {
+            throw new Error(payload.text || 'A API recusou a conversão.');
+          }
+
+          const downloadUrl = payload.url || payload.audio || payload.file;
+          if (!downloadUrl) {
+            throw new Error('Resposta da API sem link de download.');
+          }
+
+          const a = document.createElement('a');
+          a.href = downloadUrl;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          a.download = '';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+
+          statusEl.textContent = 'Download do MP3 iniciado.';
+        } catch (error) {
+          statusEl.textContent = `Não foi possível baixar MP3: ${error.message}`;
+        } finally {
+          downloadMp3Btn.disabled = false;
+        }
+      });
 
       player.addEventListener('ended', () => {
         playNextRandom();
