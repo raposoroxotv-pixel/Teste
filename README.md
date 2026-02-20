@@ -1,11 +1,17 @@
-# Voxel Mundo 3D (browser)
+# Painel de Vídeos Local
 
-Jogo voxel em primeira pessoa feito com **HTML + CSS + JavaScript + Three.js**.
+Aplicativo web (uso local no computador) para:
+
+- Selecionar uma pasta com vídeos.
+- Exibir os vídeos em um painel/lista.
+- Reproduzir o vídeo selecionado.
+- Embaralhar a ordem de reprodução.
+- Ir para o vídeo anterior/próximo.
 
 ## Como executar
 
 1. Entre na pasta do projeto.
-2. Rode um servidor HTTP local (exemplo com Python):
+2. Inicie um servidor HTTP local:
 
 ```bash
 python3 -m http.server 8000
@@ -17,18 +23,13 @@ python3 -m http.server 8000
 http://localhost:8000
 ```
 
-## Controles
+## Como usar
 
-- **WASD**: mover
-- **Espaço**: pular (somente no chão)
-- **Mouse**: olhar
-- **Clique esquerdo**: remover bloco
-- **Clique direito**: colocar bloco
-- **Q**: alternar bloco selecionado (grama/terra)
+1. Clique em **Selecionar pasta de vídeos**.
+2. Escolha a pasta que contém seus vídeos.
+3. Use:
+   - **Embaralhar ordem** para ordem aleatória.
+   - **Anterior** e **Próximo** para navegar.
+4. Clique em qualquer item da lista para tocar aquele vídeo.
 
-## Regras do mundo
-
-- Mundo limitado a **30 × 30 × 30**
-- Base sólida inicial com blocos de **terra** e **grama**
-- Apenas dois tipos de bloco: **grama** e **terra**
-- Colisão por caixa para o jogador e para interação com blocos
+> Observação: por segurança do navegador, os vídeos são escolhidos localmente pelo usuário a cada sessão.

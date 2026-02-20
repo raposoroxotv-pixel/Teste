@@ -3,21 +3,38 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Voxel Mundo 3D</title>
+    <title>Painel de Vídeos</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div id="hud">
-      <h1>Voxel Mundo 3D</h1>
-      <p><strong>Controles:</strong> WASD mover • Espaço pular • Mouse olhar • Clique esquerdo remover • Clique direito colocar • Q alternar bloco</p>
-      <p id="selectedBlock">Bloco selecionado: Grama</p>
-      <p id="placedCount">Blocos colocados: 0</p>
-      <p id="coords">Posição: (0.00, 0.00, 0.00)</p>
-      <p id="hint">Clique na tela para capturar o mouse.</p>
-    </div>
+    <main class="app">
+      <header class="app__header">
+        <h1>Painel de Vídeos Local</h1>
+        <p>Selecione uma pasta com vídeos, organize em ordem aleatória e navegue entre eles.</p>
+      </header>
 
-    <canvas id="game"></canvas>
+      <section class="toolbar">
+        <label for="folderInput" class="button button--primary">Selecionar pasta de vídeos</label>
+        <input id="folderInput" type="file" webkitdirectory directory multiple accept="video/*" />
 
-    <script type="module" src="script.js"></script>
+        <button id="shuffleButton" class="button" type="button" disabled>Embaralhar ordem</button>
+        <button id="prevButton" class="button" type="button" disabled>Anterior</button>
+        <button id="nextButton" class="button" type="button" disabled>Próximo</button>
+      </section>
+
+      <section class="content">
+        <aside class="playlist">
+          <h2>Vídeos da pasta</h2>
+          <ul id="videoList"></ul>
+        </aside>
+
+        <section class="player-panel">
+          <video id="videoPlayer" controls></video>
+          <p id="status">Nenhum vídeo carregado.</p>
+        </section>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
   </body>
 </html>
