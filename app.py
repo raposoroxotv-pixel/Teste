@@ -1,17 +1,20 @@
 from __future__ import annotations
 
+import cgi
 import json
 import mimetypes
 import shutil
 import subprocess
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from urllib.parse import unquote, urlparse
 
 BASE_DIR = Path(__file__).resolve().parent
 DOWNLOADS_DIR = BASE_DIR / "downloads"
+MEDIA_DIR = BASE_DIR / "media_library"
 DOWNLOADS_DIR.mkdir(exist_ok=True)
+MEDIA_DIR.mkdir(exist_ok=True)
 
 
 def is_youtube_url(url: str) -> bool:
@@ -69,6 +72,30 @@ def convert_youtube_to_mp3(url: str) -> Path:
     return output_path
 
 
+def sanitize_relative_path(raw_name: str) -> Path:
+    clean_name = raw_name.replace("\\", "/")
+    path_obj = PurePosixPath(clean_name)
+    safe_parts = [part for part in path_obj.parts if part not in {"", ".", ".."}]
+    if not safe_parts:
+        return Path("arquivo")
+    return Path(*safe_parts)
+
+
+def is_video_file(path: Path) -> bool:
+    guessed = mimetypes.guess_type(path.name)[0] or ""
+    return guessed.startswith("video/")
+
+
+def list_saved_videos() -> list[dict[str, str]]:
+    videos: list[dict[str, str]] = []
+    for file_path in sorted(MEDIA_DIR.rglob("*")):
+        if not file_path.is_file() or not is_video_file(file_path):
+            continue
+        rel = file_path.relative_to(MEDIA_DIR).as_posix()
+        videos.append({"name": rel, "url": f"/media/{rel}"})
+    return videos
+
+
 class AppHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(BASE_DIR), **kwargs)
@@ -81,10 +108,24 @@ class AppHandler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _send_file(self, file_path: Path, as_attachment: bool = False) -> None:
+        ctype = mimetypes.guess_type(file_path.name)[0] or "application/octet-stream"
+        data = file_path.read_bytes()
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", ctype)
+        disposition = "attachment" if as_attachment else "inline"
+        self.send_header("Content-Disposition", f'{disposition}; filename="{file_path.name}"')
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
     def do_GET(self) -> None:  # noqa: N802
         if self.path == "/":
             self.path = "/index.html"
             return super().do_GET()
+
+        if self.path == "/api/videos":
+            return self.send_json({"videos": list_saved_videos()})
 
         if self.path.startswith("/downloads/"):
             raw_name = self.path.removeprefix("/downloads/")
@@ -92,20 +133,53 @@ class AppHandler(SimpleHTTPRequestHandler):
             file_path = DOWNLOADS_DIR / filename
             if not file_path.exists() or not file_path.is_file():
                 return self.send_error(HTTPStatus.NOT_FOUND, "Arquivo não encontrado")
+            self._send_file(file_path, as_attachment=True)
+            return
 
-            ctype = mimetypes.guess_type(file_path.name)[0] or "application/octet-stream"
-            data = file_path.read_bytes()
-            self.send_response(HTTPStatus.OK)
-            self.send_header("Content-Type", ctype)
-            self.send_header("Content-Disposition", f'attachment; filename="{file_path.name}"')
-            self.send_header("Content-Length", str(len(data)))
-            self.end_headers()
-            self.wfile.write(data)
+        if self.path.startswith("/media/"):
+            raw_name = self.path.removeprefix("/media/")
+            rel = sanitize_relative_path(unquote(raw_name))
+            file_path = (MEDIA_DIR / rel).resolve()
+            if MEDIA_DIR.resolve() not in file_path.parents or not file_path.exists() or not file_path.is_file():
+                return self.send_error(HTTPStatus.NOT_FOUND, "Vídeo não encontrado")
+            self._send_file(file_path)
             return
 
         return super().do_GET()
 
+    def handle_upload(self) -> None:
+        ctype, pdict = cgi.parse_header(self.headers.get("Content-Type", ""))
+        if ctype != "multipart/form-data":
+            return self.send_json({"error": "Envie arquivos usando multipart/form-data."}, status=400)
+
+        pdict["boundary"] = pdict.get("boundary", "").encode("utf-8")
+        form = cgi.FieldStorage(fp=self.rfile, headers=self.headers, environ={"REQUEST_METHOD": "POST"})
+        files_field = form["videos"] if "videos" in form else []
+        if not isinstance(files_field, list):
+            files_field = [files_field]
+
+        saved_count = 0
+        for item in files_field:
+            if not getattr(item, "file", None) or not item.filename:
+                continue
+            rel_path = sanitize_relative_path(item.filename)
+            if not is_video_file(rel_path):
+                continue
+            dest = MEDIA_DIR / rel_path
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            with dest.open("wb") as fp:
+                shutil.copyfileobj(item.file, fp)
+            saved_count += 1
+
+        if saved_count == 0:
+            return self.send_json({"error": "Nenhum arquivo de vídeo válido foi enviado."}, status=400)
+
+        return self.send_json({"message": f"{saved_count} vídeo(s) salvo(s) com sucesso.", "videos": list_saved_videos()})
+
     def do_POST(self) -> None:  # noqa: N802
+        if self.path == "/api/videos/upload":
+            return self.handle_upload()
+
         if self.path != "/api/youtube-to-mp3":
             return self.send_error(HTTPStatus.NOT_FOUND, "Rota não encontrada")
 

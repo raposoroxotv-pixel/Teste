@@ -10,11 +10,14 @@
     <main class="app">
       <header class="app__header">
         <h1>Painel de Vídeos Local</h1>
-        <p>Selecione uma pasta com vídeos, organize em ordem aleatória e navegue entre eles.</p>
+        <p>Adicione vídeos e pastas de vídeos para salvar e reproduzir no aplicativo.</p>
       </header>
 
       <section class="toolbar">
-        <label for="folderInput" class="button button--primary">Selecionar pasta de vídeos</label>
+        <label for="videoInput" class="button button--primary">Adicionar vídeos</label>
+        <input id="videoInput" type="file" multiple accept="video/*" />
+
+        <label for="folderInput" class="button button--primary">Adicionar pasta de vídeos</label>
         <input id="folderInput" type="file" webkitdirectory directory multiple accept="video/*" />
 
         <button id="shuffleButton" class="button" type="button" disabled>Embaralhar ordem</button>
@@ -24,13 +27,13 @@
 
       <section class="content">
         <aside class="playlist">
-          <h2>Vídeos da pasta</h2>
+          <h2>Vídeos salvos</h2>
           <ul id="videoList"></ul>
         </aside>
 
         <section class="player-panel">
           <video id="videoPlayer" controls></video>
-          <p id="status">Nenhum vídeo carregado.</p>
+          <p id="status">Carregando biblioteca...</p>
         </section>
       </section>
     </main>
