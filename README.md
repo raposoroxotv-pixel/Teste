@@ -1,35 +1,76 @@
-# Painel de Vídeos Local
+# LocalTok (offline)
 
-Aplicativo web (uso local no computador) para:
+Aplicação completa estilo TikTok para uso **100% local/offline**.
 
-- Adicionar vídeos avulsos.
-- Adicionar pastas inteiras com vídeos.
-- Salvar essa biblioteca no próprio aplicativo para reutilizar depois.
-- Exibir os vídeos em uma lista e reproduzir no player.
-- Embaralhar a ordem de reprodução.
-- Ir para o vídeo anterior/próximo.
+## Stack
 
-## Como executar
+- Frontend: React + Vite + CSS moderno (Grid/Flexbox)
+- Backend: Node.js + Express
+- Banco local: SQLite
+- Player: HTML5 Video API
 
-1. Entre na pasta do projeto.
-2. Inicie o servidor do app:
+## Funcionalidades implementadas
 
-```bash
-python3 app.py
-```
+- Feed vertical com rolagem infinita e snap por tela.
+- Reprodução automática do vídeo ativo e pausa dos demais.
+- Upload local de vídeos (`.mp4`, `.webm`, `.mov`).
+- Geração automática de thumbnail no backend (FFmpeg estático).
+- Metadados por vídeo:
+  - título
+  - descrição
+  - tags
+  - data de upload
+  - likes (simulado)
+  - favoritos (simulado)
+  - visualizações automáticas
+  - caminho do arquivo
+- Busca por título, descrição e tags.
+- Drag & drop para upload.
+- Tema escuro com botões flutuantes laterais no card.
 
-3. Abra no navegador:
+## Estrutura
 
 ```text
-http://localhost:5000
+/backend
+  server.js
+  database.js
+  routes/videos.js
+/frontend
+  src/App.jsx
+  src/components/
+  src/pages/
+  src/styles/
 ```
 
-## Como usar
+## Instalação
 
-1. Clique em **Adicionar vídeos** para enviar arquivos avulsos.
-2. Clique em **Adicionar pasta de vídeos** para enviar uma pasta inteira.
-3. Os vídeos enviados ficam salvos na pasta `media_library` do aplicativo.
-4. Use:
-   - **Embaralhar ordem** para ordem aleatória.
-   - **Anterior** e **Próximo** para navegar.
-5. Clique em qualquer item da lista para tocar aquele vídeo.
+Na raiz do projeto:
+
+```bash
+npm install
+npm run install:all
+```
+
+## Execução (desenvolvimento)
+
+```bash
+npm run dev
+```
+
+Acesse:
+
+- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:4000`
+
+## Scripts
+
+- `npm run install:all` → instala dependências de backend e frontend.
+- `npm run dev` → sobe backend e frontend em paralelo.
+- `npm run start` → backend + frontend (modo dev no frontend).
+- `npm run build` → build do frontend.
+
+## Observações
+
+- Os vídeos são armazenados localmente em `backend/uploads/videos`.
+- As thumbs são armazenadas em `backend/uploads/thumbnails`.
+- O banco SQLite local é `backend/localtok.db`.
